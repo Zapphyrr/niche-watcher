@@ -5,11 +5,11 @@ from datetime import datetime
 
 class RSSService:
     def __init__(self):
-        # Configure vos 3 blogs dev ici
+        # HackerNews + Dev.to + CSS-Tricks
         self.feeds = [
-            "https://example-blog1.com/feed.xml",
-            "https://example-blog2.com/feed.xml",
-            "https://example-blog3.com/feed.xml",
+            "https://news.ycombinator.com/rss",
+            "https://dev.to/feed",
+            "https://css-tricks.com/feed",
         ]
     
     def fetch_posts(self) -> List[dict]:

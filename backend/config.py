@@ -6,11 +6,9 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql://user:password@localhost:5432/niche_watcher"
     
-    # Email
-    smtp_server: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    smtp_username: str
-    smtp_password: str
+    # Email (Resend)
+    resend_api_key: str
+    sender_email: str = "noreply@niche-watcher.com"
     
     # API
     api_host: str = "0.0.0.0"
