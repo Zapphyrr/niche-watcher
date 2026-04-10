@@ -1,42 +1,34 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from resend import Resend
 from config import get_settings
 from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
     def __init__(self):
         self.settings = get_settings()
+        self.client = Resend(api_key=self.settings.resend_api_key)
     
     def send_weekly_digest(self, recipient_email: str, posts: List[dict]) -> bool:
-        """Envoie le digest hebdomadaire par email"""
+        """Envoie le digest hebdomadaire par email avec Resend"""
         try:
             # Créer le contenu HTML
             html_content = self._generate_html(posts)
             
-            # Créer le message
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = "📰 Niche Watcher - Résumé de la semaine"
-            msg["From"] = self.settings.smtp_username
-            msg["To"] = recipient_email
+            # Envoyer l'email via Resend
+            response = self.client.emails.send({
+                "from": self.settings.sender_email,
+                "to": recipient_email,
+                "subject": "📰 Niche Watcher - Résumé de la semaine",
+                "html": html_content
+            })
             
-            html_part = MIMEText(html_content, "html")
-            msg.attach(html_part)
-            
-            # Envoyer l'email
-            with smtplib.SMTP(self.settings.smtp_server, self.settings.smtp_port) as server:
-                server.starttls()
-                server.login(self.settings.smtp_username, self.settings.smtp_password)
-                server.sendmail(
-                    self.settings.smtp_username,
-                    recipient_email,
-                    msg.as_string()
-                )
-            
+            logger.info(f"Email sent successfully to {recipient_email}")
             return True
         except Exception as e:
-            print(f"Error sending email: {e}")
+            logger.error(f"Error sending email: {e}")
             return False
     
     def _generate_html(self, posts: List[dict]) -> str:
