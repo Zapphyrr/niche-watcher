@@ -1,0 +1,33 @@
+# Backend
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.venv
+backend/venv
+backend/env
+backend/.pytest_cache
+backend/dist
+backend/build
+*.egg-info
+
+# Mobile
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
