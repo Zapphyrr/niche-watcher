@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Niche Watcher{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .hero {
+        text-align: center;
+        padding: 3rem 0;
+    }
+
+    .hero h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero p {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg);
+        padding: 2rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        text-align: center;
+    }
+
+    .stat-card .number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card .label {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .features {
+        margin-top: 4rem;
+    }
+
+    .features h3 {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-card {
+        background-color: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .feature-card h4 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h2>Surveillez Vos Niches Préférées</h2>
+    <p>Niche Watcher vous aide à suivre les posts, discussions et tendances dans vos communautés favorites. Restez informé en temps réel.</p>
+    <div class="cta-buttons">
+        <a href="/posts" class="button">Voir les Posts</a>
+        <a href="https://github.com" class="button secondary">Documentation</a>
+    </div>
+</section>
+
+<section class="stats">
+    <div class="stat-card">
+        <div class="number">{{ stats.total_posts }}</div>
+        <div class="label">Posts Suivis</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.sources }}</div>
+        <div class="label">Sources</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.users_tracking }}</div>
+        <div class="label">Utilisateurs</div>
+    </div>
+</section>
+
+<section class="features">
+    <h3>Fonctionnalités Principales</h3>
+    <div class="features-grid">
+        <div class="feature-card">
+            <h4>📰 RSS Feed Tracking</h4>
+            <p>Suivez automatiquement les flux RSS de vos sources préférées.</p>
+        </div>
+        <div class="feature-card">
+            <h4>🔴 Reddit Monitoring</h4>
+            <p>Capturez les discussions pertinentes sur Reddit en temps réel.</p>
+        </div>
+        <div class="feature-card">
+            <h4>📧 Notifications Email</h4>
+            <p>Recevez des alertes personnalisées quand du contenu intéressant est découvert.</p>
+        </div>
+        <div class="feature-card">
+            <h4>📱 Mobile App</h4>
+            <p>Accédez à vos posts depuis n'importe où avec notre application mobile.</p>
+        </div>
+        <div class="feature-card">
+            <h4>🗓️ Historique par Semaine</h4>
+            <p>Consultez l'historique complet de vos posts par semaine.</p>
+        </div>
+        <div class="feature-card">
+            <h4>⚡ API Performante</h4>
+            <p>Intégrez facilement Niche Watcher dans vos outils existants.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

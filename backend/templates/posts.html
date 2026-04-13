@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Posts - Niche Watcher{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .filters {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filters select {
+        padding: 0.5rem 1rem;
+        background-color: var(--card-bg);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        cursor: pointer;
+    }
+
+    .posts-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .post-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .post-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.1);
+    }
+
+    .post-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .post-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-light);
+        word-break: break-word;
+        flex: 1;
+    }
+
+    .post-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 1rem;
+        white-space: nowrap;
+    }
+
+    .post-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .post-content {
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        margin: 1rem 0;
+        color: var(--text-light);
+        overflow: hidden;
+        max-height: 100px;
+    }
+
+    .post-content.expanded {
+        max-height: none;
+    }
+
+    .post-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .post-source {
+        color: var(--secondary-color);
+        font-weight: 600;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .post-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--primary-color);
+        border-radius: 0.5rem;
+        transition: all 0.3s;
+    }
+
+    .post-link:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+        color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .pagination a, .pagination span {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .pagination a:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .pagination .current {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h2>Tous les Posts</h2>
+    <div class="filters">
+        <select id="sortBy">
+            <option value="latest">Plus récents</option>
+            <option value="oldest">Plus anciens</option>
+        </select>
+        <input type="number" id="weekFilter" placeholder="Semaine (optionnel)" min="1" max="52">
+        <button class="button" onclick="applyFilters()">Filtrer</button>
+    </div>
+</div>
+
+{% if posts %}
+<div class="posts-grid">
+    {% for post in posts %}
+    <div class="post-card">
+        <div class="post-header">
+            <h3 class="post-title">{{ post.title or 'Sans titre' }}</h3>
+            <span class="post-badge">{{ post.source }}</span>
+        </div>
+        
+        <div class="post-meta">
+            <div class="meta-item">
+                📅 {{ post.created_at.strftime('%d/%m/%Y') if post.created_at else 'N/A' }}
+            </div>
+            <div class="meta-item">
+                🔗 Semaine {{ post.week }}/{{ post.year }}
+            </div>
+        </div>
+
+        <div class="post-content">
+            {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+        </div>
+
+        <div class="post-footer">
+            <span class="post-source">{{ post.source }}</span>
+            <div class="post-actions">
+                {% if post.url %}
+                <a href="{{ post.url }}" target="_blank" rel="noopener noreferrer" class="post-link">Voir plus</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}">&larr; Précédent</a>
+    {% endif %}
+    
+    <span>Page {{ page }}</span>
+    
+    {% if has_next %}
+    <a href="?page={{ page + 1 }}">Suivant &rarr;</a>
+    {% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>Aucun post trouvé</h3>
+    <p>Revenez bientôt pour voir de nouveaux posts!</p>
+</div>
+{% endif %}
+
+<script>
+function applyFilters() {
+    const sortBy = document.getElementById('sortBy').value;
+    const week = document.getElementById('weekFilter').value;
+    let url = '/posts?sort=' + sortBy;
+    if (week) {
+        url += '&week=' + week;
+    }
+    window.location.href = url;
+}
+</script>
+{% endblock %}
