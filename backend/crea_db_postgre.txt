@@ -1,0 +1,7 @@
+CREATE USER niche_watcher WITH PASSWORD '';
+CREATE DATABASE niche_watcher OWNER niche_watcher;
+ALTER ROLE niche_watcher SET client_encoding TO 'utf8';
+ALTER ROLE niche_watcher SET default_transaction_isolation TO 'read committed';
+ALTER ROLE niche_watcher SET default_transaction_deferrable TO on;
+ALTER ROLE niche_watcher SET default_timezone TO 'UTC';
+\q
