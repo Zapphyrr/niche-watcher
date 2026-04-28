@@ -11,8 +11,8 @@ from pathlib import Path
 
 settings = get_settings()
 
-# Créer les tables (commenté pour le déploiement - les tables existent déjà)
-# Base.metadata.create_all(bind=engine)
+# Créer les tables à startup (idempotent - crée seulement si manquantes)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Niche Watcher API")
 
