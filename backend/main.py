@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -11,10 +12,14 @@ from pathlib import Path
 
 settings = get_settings()
 
-# Créer les tables à startup (idempotent - crée seulement si manquantes)
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup - créer les tables
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Shutdown
 
-app = FastAPI(title="Niche Watcher API")
+app = FastAPI(title="Niche Watcher API", lifespan=lifespan) 
 
 # Configuration des templates
 templates_dir = Path(__file__).parent / "templates"
