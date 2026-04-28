@@ -4,7 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "sqlite:///./test.db"
+    database_url: str 
     
     # Email Bot (Gmail SMTP)
     email_bot_address: str = "niche.watcher.bot@gmail.com"
