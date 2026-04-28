@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
 from database import Base, engine, get_db
-from routes import posts_router
-from models import Post
-from sqlalchemy.orm import Session
+from routes import posts_router, auth_router
+from models import Post, User
+from services import decode_access_token
 from pathlib import Path
 
 settings = get_settings()
@@ -30,6 +31,33 @@ app.add_middleware(
 
 # Routes API
 app.include_router(posts_router)
+app.include_router(auth_router)
+
+
+def _get_authenticated_user(request: Request, db):
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+
+    try:
+        payload = decode_access_token(token)
+        user_id = int(payload.get("sub", "0"))
+    except (ValueError, TypeError):
+        return None
+
+    return db.query(User).filter(User.id == user_id).first()
+
+
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/logout")
+def logout_page():
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("access_token")
+    return response
 
 
 @app.get("/")
@@ -37,13 +65,17 @@ def read_root(request: Request):
     """Page d'accueil"""
     db = next(get_db())
     try:
+        user = _get_authenticated_user(request, db)
+        if user is None:
+            return RedirectResponse(url="/login", status_code=303)
+
         total_posts = db.query(Post).count()
         stats = {
             "total_posts": total_posts,
             "sources": 3,  # RSS, Reddit, Email
-            "users_tracking": 1
+            "users_tracking": db.query(User).count()
         }
-        return templates.TemplateResponse("index.html", {"request": request, "stats": stats})
+        return templates.TemplateResponse("index.html", {"request": request, "stats": stats, "user": user})
     finally:
         db.close()
 
@@ -53,6 +85,10 @@ def get_posts_page(request: Request, page: int = 1, sort: str = "latest", week: 
     """Page des posts avec pagination"""
     db = next(get_db())
     try:
+        user = _get_authenticated_user(request, db)
+        if user is None:
+            return RedirectResponse(url="/login", status_code=303)
+
         limit = 10
         skip = (page - 1) * limit
         
@@ -78,7 +114,8 @@ def get_posts_page(request: Request, page: int = 1, sort: str = "latest", week: 
                 "posts": posts,
                 "page": page,
                 "has_next": has_next,
-                "total_posts": total_posts
+                "total_posts": total_posts,
+                "user": user,
             }
         )
     finally:

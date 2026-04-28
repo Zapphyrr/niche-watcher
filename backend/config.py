@@ -6,23 +6,24 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./test.db"
     
-    # Email (Resend)
-    resend_api_key: str = "dev_key"
-    sender_email: str = "noreply@niche-watcher.com"
+    # Email Bot (Gmail SMTP)
+    email_bot_address: str = "niche.watcher.bot@gmail.com"
+    email_bot_password: str = "dev_bot_password"
     
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    
-    # Reddit
-    reddit_client_id: str = "dev_reddit_id"
-    reddit_client_secret: str = "dev_reddit_secret"
     
     # CORS
     frontend_url: str = "http://localhost:3000"
     
     # Environment
     environment: str = "development"
+
+    # Auth
+    jwt_secret_key: str = "change-me-in-env"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60
     
     class Config:
         env_file = ".env"

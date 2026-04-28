@@ -1,14 +1,20 @@
 """
 Script à exécuter via cron tous les vendredis à 18h
 0 18 * * 5 python scheduler.py
+
+Ou en boucle automatique (pour tests) :
+python scheduler.py --loop
 """
 
 from datetime import datetime
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 from models import Post, User
-from services import RSSService, RedditService, EmailService
+from services import RSSService, EmailService
 import logging
+import schedule
+import time
+import sys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,13 +35,13 @@ def run_weekly_digest():
         logger.info("📡 Récupération des posts RSS...")
         rss_service = RSSService()
         rss_posts = rss_service.fetch_posts()
-        
+        '''
         logger.info("🔥 Récupération des top posts Reddit...")
         reddit_service = RedditService()
         reddit_posts = reddit_service.fetch_top_posts()
-        
+        '''
         # Combiner tous les posts
-        all_posts = rss_posts + reddit_posts
+        all_posts = rss_posts 
         
         # Déterminer la semaine et l'année ISO
         now = datetime.now()
@@ -45,6 +51,7 @@ def run_weekly_digest():
         # Sauvegarder en base de données
         logger.info(f"💾 Sauvegarde de {len(all_posts)} posts en base de données...")
         for post_data in all_posts:
+            
             post = Post(
                 title=post_data.get("title"),
                 url=post_data.get("url"),
@@ -64,7 +71,7 @@ def run_weekly_digest():
         logger.info("📧 Envoi des emails...")
         email_service = EmailService()
         users = db.query(User).filter(User.subscribed == True).all()
-        
+        logger.info(f"📨 Envoi à {len(users)} utilisateur(s) subscribed...")
         for user in users:
             success = email_service.send_weekly_digest(user.email, all_posts)
             if success:
@@ -84,4 +91,20 @@ def run_weekly_digest():
 
 
 if __name__ == "__main__":
-    run_weekly_digest()
+    # Si --loop en argument, active la boucle automatique
+    if len(sys.argv) > 1 and sys.argv[1] == "--loop":
+        logger.info("🔄 Mode boucle automatique activé (toutes les 10 minutes)")
+        
+        # Planifier l'exécution toutes les 10 minutes
+        schedule.every(10).minutes.do(run_weekly_digest)
+        
+        # Boucle infinie
+        try:
+            while True:
+                schedule.run_pending()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("⏹️  Arrêt du scheduler...")
+    else:
+        # Exécution unique (défaut)
+        run_weekly_digest()

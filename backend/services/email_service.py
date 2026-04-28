@@ -1,4 +1,6 @@
-from resend import Resend
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from config import get_settings
 from typing import List
 import logging
@@ -9,50 +11,67 @@ logger = logging.getLogger(__name__)
 class EmailService:
     def __init__(self):
         self.settings = get_settings()
-        self.client = Resend(api_key=self.settings.resend_api_key)
+        self.bot_email = self.settings.email_bot_address
+        self.bot_password = self.settings.email_bot_password
     
     def send_weekly_digest(self, recipient_email: str, posts: List[dict]) -> bool:
-        """Envoie le digest hebdomadaire par email avec Resend"""
+        """Envoie le digest hebdomadaire par email depuis le bot Gmail"""
         try:
-            # Créer le contenu HTML
             html_content = self._generate_html(posts)
             
-            # Envoyer l'email via Resend
-            response = self.client.emails.send({
-                "from": self.settings.sender_email,
-                "to": recipient_email,
-                "subject": "📰 Niche Watcher - Résumé de la semaine",
-                "html": html_content
-            })
+            # Créer l'email
+            msg = MIMEMultipart()
+            msg['From'] = self.bot_email
+            msg['To'] = recipient_email
+            msg['Subject'] = "📰 Niche Watcher - Résumé de la semaine"
+            msg.attach(MIMEText(html_content, 'html'))
             
-            logger.info(f"Email sent successfully to {recipient_email}")
+            # Envoyer via SMTP Gmail depuis le bot
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                server.login(self.bot_email, self.bot_password)
+                server.send_message(msg)
+            
+            logger.info(f"✅ Email sent successfully from {self.bot_email} to {recipient_email}")
             return True
         except Exception as e:
-            logger.error(f"Error sending email: {e}")
+            logger.error(f"❌ Error sending email: {e}")
             return False
     
     def _generate_html(self, posts: List[dict]) -> str:
         """Génère le HTML du digest"""
         html = """
         <html>
-            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1>📰 Niche Watcher - Résumé de la semaine</h1>
-                <p>Découvre ce qu'il s'est passé cette semaine dans l'univers dev!</p>
-                <hr>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f5f5f5; padding: 20px;">
+                <div style="background-color: white; padding: 20px; border-radius: 8px;">
+                    <h1 style="color: #333;">📰 Niche Watcher - Résumé de la semaine</h1>
+                    <p style="color: #666;">Découvre ce qu'il s'est passé cette semaine!</p>
+                    <hr style="border: 1px solid #ddd;">
         """
         
-        for post in posts:
-            html += f"""
-                <div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-                    <h3><a href="{post.get('url', '#')}">{post.get('title', 'No title')}</a></h3>
-                    <p><small>Source: {post.get('source', 'Unknown')}</small></p>
-                    <p>{post.get('content', '')[:200]}...</p>
-                </div>
-            """
+        if not posts:
+            html += "<p style='color: #999;'>Aucun nouveau post cette semaine.</p>"
+        else:
+            for post in posts:
+                html += f"""
+                    <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                        <h3 style="margin: 0 0 10px 0; color: #333;">
+                            <a href="{post.get('url', '#')}" style="color: #0066cc; text-decoration: none;">
+                                {post.get('title', 'No title')}
+                            </a>
+                        </h3>
+                        <p style="margin: 5px 0; color: #666; font-size: 12px;">
+                            <strong>Source:</strong> {post.get('source', 'Unknown')}
+                        </p>
+                        <p style="margin: 10px 0; color: #555;">{post.get('content', '')[:200]}...</p>
+                    </div>
+                """
         
         html += """
-                <hr>
-                <p><a href="https://niche-watcher.com/app">Ouvre l'app mobile pour plus de détails »</a></p>
+                    <hr style="border: 1px solid #ddd; margin-top: 20px;">
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        Niche Watcher - Votre veille simplifiée
+                    </p>
+                </div>
             </body>
         </html>
         """

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion - Niche Watcher{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .auth-wrapper {
+        max-width: 520px;
+        margin: 2rem auto;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 2rem;
+    }
+
+    .auth-title {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-tabs {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-tab {
+        flex: 1;
+        border: 1px solid var(--border-color);
+        background: #111827;
+        color: var(--text-light);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+    }
+
+    .auth-tab.active {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .auth-panel {
+        display: none;
+    }
+
+    .auth-panel.active {
+        display: block;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+    }
+
+    .field input {
+        background: #111827;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        color: var(--text-light);
+        padding: 0.75rem;
+    }
+
+    .field input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .message {
+        min-height: 1.5rem;
+        font-size: 0.92rem;
+        color: var(--text-muted);
+        margin-bottom: 0.8rem;
+    }
+
+    .message.error {
+        color: #f87171;
+    }
+
+    .message.success {
+        color: #34d399;
+    }
+
+    .auth-note {
+        color: var(--text-muted);
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="auth-wrapper">
+    <h2 class="auth-title">Connexion requise</h2>
+
+    <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-mode="login">Se connecter</button>
+        <button type="button" class="auth-tab" data-mode="signup">S'inscrire</button>
+    </div>
+
+    <div id="auth-message" class="message"></div>
+
+    <form id="auth-form" autocomplete="on">
+        <div class="auth-panel active" data-panel="login">
+            <div class="field">
+                <label for="login-email">Email</label>
+                <input id="login-email" name="email" type="email" autocomplete="email">
+            </div>
+            <div class="field">
+                <label for="login-password">Mot de passe</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" minlength="8">
+            </div>
+        </div>
+
+        <div class="auth-panel" data-panel="signup">
+            <div class="field">
+                <label for="signup-email">Email</label>
+                <input id="signup-email" name="email" type="email" autocomplete="email">
+            </div>
+            <div class="field">
+                <label for="signup-password">Mot de passe</label>
+                <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8">
+            </div>
+        </div>
+
+        <button id="auth-submit" class="button" type="submit">Se connecter</button>
+    </form>
+
+    <p class="auth-note">Un JWT est stocké en cookie HttpOnly après connexion.</p>
+</section>
+
+<script>
+const tabs = document.querySelectorAll('.auth-tab');
+const panels = document.querySelectorAll('.auth-panel');
+const message = document.getElementById('auth-message');
+const submitButton = document.getElementById('auth-submit');
+const authForm = document.getElementById('auth-form');
+let currentMode = 'login';
+
+function setMessage(text, type = '') {
+    message.textContent = text;
+    message.className = 'message';
+    if (type) {
+        message.classList.add(type);
+    }
+}
+
+function setMode(mode) {
+    currentMode = mode;
+
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.mode === mode);
+    });
+
+    panels.forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.panel === mode);
+    });
+
+    submitButton.textContent = mode === 'signup' ? 'Créer un compte' : 'Se connecter';
+    setMessage('');
+}
+
+for (const tab of tabs) {
+    tab.addEventListener('click', () => setMode(tab.dataset.mode));
+}
+
+async function submitAuth(endpoint, email, password) {
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'same-origin'
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(payload.detail || 'Erreur authentification');
+    }
+
+    return payload;
+}
+
+authForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    try {
+        const email = currentMode === 'signup'
+            ? document.getElementById('signup-email').value
+            : document.getElementById('login-email').value;
+        const password = currentMode === 'signup'
+            ? document.getElementById('signup-password').value
+            : document.getElementById('login-password').value;
+
+        // Validation
+        if (!email || !email.includes('@')) {
+            setMessage('Email invalide', 'error');
+            return;
+        }
+        if (!password || password.length < 8) {
+            setMessage('Le mot de passe doit faire au moins 8 caractères', 'error');
+            return;
+        }
+
+        const endpoint = currentMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+
+        await submitAuth(endpoint, email, password);
+        setMessage(currentMode === 'signup' ? 'Compte créé, redirection...' : 'Connexion réussie, redirection...', 'success');
+        window.location.href = '/';
+    } catch (err) {
+        setMessage(err.message, 'error');
+    }
+});
+
+setMode('login');
+</script>
+{% endblock %}

@@ -1,41 +1,49 @@
-# 🚀 Guide de Développement - Niche Watcher
+# Niche Watcher - Development Guide
 
-Ce guide vous permet de configurer et lancer le projet Niche Watcher sur votre machine.
+This file is the handoff note for the next developer. It reflects the current state of the app, what is already working, and what should come next.
 
-## 📋 Prérequis
+## Current Goal
 
-Avant de commencer, assurez-vous d'avoir:
-- **Python 3.8+** instalé
-- **PostgreSQL 14+** installé et en cours d'exécution
-- **Git** (optionnel, pour cloner le repo)
+Niche Watcher aggregates content into a shared database and sends a weekly digest. The scheduler is intentionally shared for everyone; client apps should read from the database, not run their own scraping jobs. The next major feature is authentication so users can sign up, log in, and be tied to subscriptions before deployment.
 
-### Vérifier l'installation
+## What Is Already Working
+
+- FastAPI backend with template routes on `localhost:8000`.
+- PostgreSQL schema and SQLAlchemy models.
+- Hacker News ingestion through HTML scraping, not RSS.
+- Dev.to and CSS-Tricks ingestion through RSS.
+- Gmail SMTP email delivery.
+- Scheduler execution with a test loop mode.
+- Jinja2 frontend pages with a dark theme.
+- PowerShell profile customization with timestamps in the prompt.
+
+## Setup
+
+### Prerequisites
+
+- Python 3.8+.
+- PostgreSQL 14+ running locally.
+- Git, if you want to clone the repository.
+
+Check the local tools:
 
 ```bash
 python --version
 psql --version
 ```
 
----
-
-## 1️⃣ Cloner le projet
+### Clone the project
 
 ```bash
 git clone https://github.com/Zapphyrr/niche-watcher.git
 cd niche-watcher/backend
 ```
 
----
-
-## 2️⃣ Configurer PostgreSQL
-
-### Étape 1: Accéder à PostgreSQL
+### Create the database
 
 ```bash
 psql -U postgres
 ```
-
-### Étape 2: Créer la base de données et l'utilisateur
 
 ```sql
 CREATE USER niche_watcher WITH PASSWORD 'your_secure_password';
@@ -47,233 +55,216 @@ ALTER ROLE niche_watcher SET timezone TO 'UTC';
 \q
 ```
 
-⚠️ **Remplacez `your_secure_password` par un mot de passe sécurisé!**
-
----
-
-## 3️⃣ Créer l'environnement virtuel
+### Create the virtual environment
 
 ```bash
-# Créer le venv
 python -m venv venv
+```
 
-# Activer le venv
-# Sur Windows:
+Windows:
+
+```bash
 venv\Scripts\activate
-# Sur macOS/Linux:
+```
+
+macOS/Linux:
+
+```bash
 source venv/bin/activate
 ```
 
-Vous devriez voir `(venv)` au début de votre prompt.
+### Configure environment variables
 
----
+Create `backend/.env`:
 
-## 4️⃣ Configurer les variables d'environnement
-
-### Créer le fichier `.env`
-
-Créez un fichier `.env` dans le répertoire `backend`:
-
-```
-# Database
+```env
 DATABASE_URL=postgresql://niche_watcher:your_secure_password@localhost:5432/niche_watcher
-
-# Email (Resend)
-RESEND_API_KEY=your_resend_api_key
-SENDER_EMAIL=noreply@niche-watcher.com
-
-# API
+EMAIL_BOT_ADDRESS=your_gmail@gmail.com
+EMAIL_BOT_PASSWORD=your_app_specific_password
 API_HOST=0.0.0.0
 API_PORT=8000
-
-# Reddit (optionnel pour le moment)
-REDDIT_CLIENT_ID=your_reddit_client_id
-REDDIT_CLIENT_SECRET=your_reddit_client_secret
-
-# Frontend URL for CORS
 FRONTEND_URL=http://localhost:3000
-
-# Environment
 ENVIRONMENT=development
 ```
 
-⚠️ **Remplacez les valeurs par vos clés réelles!**
-
----
-
-## 5️⃣ Installer les dépendances
+### Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
-## 6️⃣ Créer les tables dans PostgreSQL
+### Create tables and seed data
 
 ```bash
-python -c "from database import Base, engine; Base.metadata.create_all(bind=engine); print('✅ Tables créées!')"
-```
-
----
-
-## 7️⃣ Alimenter la base de données (optionnel)
-
-Pour ajouter des posts de test:
-
-```bash
+python -c "from database import Base, engine; Base.metadata.create_all(bind=engine); print('Tables created')"
 python seed.py
 ```
 
-Cela ajoute 10 posts d'exemple à la base de données.
+## Run The App
 
----
+### API and web UI
 
-## 8️⃣ Lancer le serveur
-
-### Mode développement (avec rechargement automatique)
+Development:
 
 ```bash
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Mode production
+Production style:
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
----
+Open:
 
-## 🌐 Accéder à l'application
+- http://localhost:8000
+- http://localhost:8000/posts
+- http://localhost:8000/docs
+- http://localhost:8000/redoc
+- http://localhost:8000/health
 
-Une fois le serveur lancé:
+### Scheduler
 
-- **Interface web**: http://localhost:8000
-- **API Documentation (Swagger)**: http://localhost:8000/docs
-- **API Documentation (ReDoc)**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
+The scheduler currently runs as a shared job for the whole app. In production it should run once on a schedule; for local testing it can loop every 10 minutes.
 
----
-
-## 📝 Structure du projet
-
+```bash
+python scheduler.py
+python scheduler.py --loop
 ```
+
+`--loop` is the test mode. It repeatedly runs the digest job every 10 minutes.
+
+## Current Data Flow
+
+1. The scheduler calls `RSSService.fetch_posts()`.
+2. Hacker News is scraped from `https://news.ycombinator.com/front?day=YYYY-MM-DD` for the last 7 days.
+3. Up to 10 posts are collected per day, then all posts are sorted by score and the top 10 are kept.
+4. Dev.to and CSS-Tricks are fetched from RSS, with the top 5 entries taken from each feed.
+5. The scheduler saves the combined post list to PostgreSQL with ISO week and year metadata.
+6. The email service sends the digest through Gmail SMTP.
+
+### Hacker News implementation details
+
+- HTML parsing uses BeautifulSoup.
+- The score is extracted from the HN score span.
+- Posts without a score default to 0.
+- This approach replaced RSS/API attempts because the score-aware feed was not reliable enough for the ranking goal.
+
+### Email implementation details
+
+- Provider: Gmail SMTP bot account.
+- Sender: `niche.watcher.bot@gmail.com`.
+- The email body is HTML formatted.
+
+## Project Structure
+
+```text
 niche-watcher/
 ├── backend/
-│   ├── main.py              # Point d'entrée FastAPI
-│   ├── config.py            # Configuration (variables d'env)
-│   ├── database.py          # Connexion PostgreSQL
-│   ├── seed.py              # Script pour alimenter la DB
-│   ├── requirements.txt      # Dépendances Python
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── scheduler.py
+│   ├── seed.py
+│   ├── requirements.txt
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── post.py          # Modèle Post
-│   │   └── user.py          # Modèle User
+│   │   ├── post.py
+│   │   └── user.py
 │   ├── routes/
 │   │   ├── __init__.py
-│   │   └── posts.py         # Routes API pour les posts
+│   │   └── posts.py
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── email_service.py # Service email (Resend)
-│   │   ├── reddit_service.py # Service Reddit
-│   │   └── rss_service.py   # Service RSS
-│   └── templates/           # Templates HTML
-│       ├── base.html       # Template de base
-│       ├── index.html      # Page d'accueil
-│       └── posts.html      # Page des posts
-├── mobile/                  # Application Flutter
-│   └── ...
-└── docker-compose.yml       # Configuration Docker
+│   │   ├── email_service.py
+│   │   ├── reddit_service.py
+│   │   └── rss_service.py
+│   └── templates/
+│       ├── base.html
+│       ├── index.html
+│       └── posts.html
+├── mobile/
+│   └── lib/
+│       ├── main.dart
+│       └── screens/
+│           └── home_screen.dart
+└── docker-compose.yml
 ```
 
----
+## Current Routes
 
-## 📚 Endpoints API disponibles
+### HTML pages
 
-### Posts
-
-```
-GET /api/posts/                     # Récupérer tous les posts (pagination)
-GET /api/posts/latest               # Récupérer les derniers posts
-GET /api/posts/week/{week}?year=... # Récupérer les posts d'une semaine
+```text
+GET /
+GET /posts
+GET /health
 ```
 
-### Pages HTML
+### API routes
 
+The posts router is mounted from `routes/posts.py`. The exact endpoints are defined there.
+
+## UI Notes
+
+- The frontend uses Jinja2 templates.
+- The design is a dark theme with a purple primary color.
+- RSS content is cleaned in the template with `striptags` and truncated for readability.
+- The posts page has improved spacing, filtered views, and a styled week selector.
+
+## PowerShell Prompt
+
+The local PowerShell profile was customized so every terminal prompt shows time, user, computer, and path.
+
+```powershell
+function prompt {
+  $time = "$(Get-Date -Format 'HH:mm:ss')"
+  $user = "${env:USERNAME}"
+  $computer = "${env:COMPUTERNAME}"
+  $path = "$(Get-Location)"
+
+  Write-Host "[$time] " -ForegroundColor Cyan -NoNewline
+  Write-Host "$user@$computer" -ForegroundColor Green -NoNewline
+  Write-Host ":" -ForegroundColor White -NoNewline
+  Write-Host "$path" -ForegroundColor Yellow -NoNewline
+  Write-Host "> " -ForegroundColor Magenta -NoNewline
+
+  return " "
+}
 ```
-GET /                       # Page d'accueil
-GET /posts                  # Liste des posts avec pagination
-```
 
----
+## Authentication Next
 
-## 🔧 Commandes utiles
+This is the next feature to implement.
 
-### Vérifier la connexion à PostgreSQL
+Recommended direction:
+
+1. Add signup and login endpoints.
+2. Hash passwords before storing them.
+3. Issue JWT tokens for session handling.
+4. Tie users to the existing `users` table.
+5. Keep the scheduler shared, but make email delivery user-aware through subscriptions.
+
+Important note: the `User` model already exists with `email`, `device_token`, `subscribed`, `created_at`, and `last_notification_at`. Authentication has not been wired in yet.
+
+## Troubleshooting
+
+- If PostgreSQL is unavailable, verify the service is running and the `DATABASE_URL` is correct.
+- If settings validation fails, check the `.env` file for missing values.
+- If Python cannot import a package, confirm the virtual environment is activated and reinstall dependencies.
+
+## Useful Checks
 
 ```bash
 psql -U niche_watcher -d niche_watcher -c "SELECT COUNT(*) FROM posts;"
+psql -U niche_watcher -d niche_watcher -c "SELECT title, source FROM posts LIMIT 10;"
 ```
 
-### Afficher tous les posts
+## Notes For The Next Agent
 
-```bash
-psql -U niche_watcher -d niche_watcher -c "SELECT title, source FROM posts;"
-```
+- Do not split the scheduler by client. It is intentionally shared.
+- The client apps should read from the database.
+- Authentication is the blocking piece before deployment and sharing the app with other people.
+- Once auth is in place, the next logical step is to make the scheduler send digests only to subscribed users.
 
-### Ajouter un post manuellement
-
-```sql
-INSERT INTO posts (title, url, content, source, source_name, likes, published_at, week, year)
-VALUES (
-  'Titre du post',
-  'https://example.com',
-  'Contenu du post',
-  'blog',
-  'Source',
-  0,
-  NOW(),
-  15,
-  2026
-);
-```
-
----
-
-## ⚠️ Dépannage
-
-### Erreur: `connection to server at "localhost" failed`
-- Vérifiez que PostgreSQL est actif: `psql -U postgres`
-- Redémarrez le service PostgreSQL
-
-### Erreur: `ValidationError: Field required [type=missing]`
-- Vérifiez que le fichier `.env` est complètement rempli
-- Vérifiez la syntaxe de `DATABASE_URL`
-
-### Erreur: `ModuleNotFoundError`
-- Assurez-vous que le venv est activé: `(venv)` dans le prompt
-- Réinstallez les dépendances: `pip install -r requirements.txt`
-
----
-
-## 🚀 Prochaines étapes
-
-1. **Configurer l'API Reddit** (voir `.env`)
-2. **Configurer Resend Email** (voir `.env`)
-3. **Développer les services** (Reddit scraper, RSS parser)
-4. **Créer la mobile app** (Flutter)
-5. **Déployer en production** (Docker, Cloud)
-
----
-
-## 📞 Support
-
-Pour toute question, consultez:
-- [Documentation FastAPI](https://fastapi.tiangolo.com/)
-- [Documentation SQLAlchemy](https://docs.sqlalchemy.org/)
-- [Documentation PostgreSQL](https://www.postgresql.org/docs/)
-
----
-
-**Happy coding! 🎉**
