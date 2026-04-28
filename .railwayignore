@@ -1,0 +1,25 @@
+# Mobile app (sera déployée séparément)
+mobile/
+
+# Dev files
+.git
+.gitignore
+.vscode
+.env
+.env.local
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.DS_Store
+
+# Docker (Railway gère ça)
+Dockerfile
+docker-compose.yml
+
+# Tests et docs (optionnel)
+tests/
+docs/
+README.md
+DEVELOPMENT.md
+RAILWAY_DEPLOY.md
