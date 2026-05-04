@@ -9,13 +9,27 @@ from routes import posts_router, auth_router
 from models import Post, User
 from services import decode_access_token
 from pathlib import Path
+import asyncio
+import logging
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - créer les tables
-    Base.metadata.create_all(bind=engine)
+    # Startup - créer les tables avec timeout
+    try:
+        # Timeout de 10 secondes pour l'initialisation
+        await asyncio.wait_for(
+            asyncio.to_thread(lambda: Base.metadata.create_all(bind=engine)),
+            timeout=10.0
+        )
+        logger.info("✅ Database tables initialized")
+    except asyncio.TimeoutError:
+        logger.warning("⚠️ Database initialization timed out, continuing anyway")
+    except Exception as e:
+        logger.warning(f"⚠️ Database initialization failed: {e}, continuing anyway")
+    
     yield
     # Shutdown
 
