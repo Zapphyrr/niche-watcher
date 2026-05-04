@@ -27,7 +27,7 @@ class EmailService:
             msg.attach(MIMEText(html_content, 'html'))
             
             # Envoyer via SMTP Gmail depuis le bot
-            with smtplib.SMTP_SSL('smtp.gmail.com', 587) as server:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
                 server.starttls()
                 server.login(self.bot_email, self.bot_password)
                 server.send_message(msg)
