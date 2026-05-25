@@ -9,8 +9,7 @@ import re
 class RSSService:
     def __init__(self):
         self.other_feeds = [
-            "https://dev.to/feed",
-            "https://css-tricks.com/feed",
+            "https://css-tricks.com/category/articles/feed/",
         ]
     
     def _scrape_hn_day(self, date_str: str) -> List[dict]:
@@ -96,6 +95,71 @@ class RSSService:
         
         return top_posts
     
+    def _scrape_devto(self) -> List[dict]:
+        """Récupère les top articles de dev.to via API"""
+        posts = []
+        url = "https://dev.to/api/articles?per_page=5&top=7days"
+        
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            articles = response.json()
+            
+            print(f"📡 Scraping Dev.to (top/week via API)...")
+            print(f"📄 {len(articles)} articles trouvés")
+            
+            for article in articles:
+                try:
+                    post = {
+                        "title": article.get("title", ""),
+                        "url": article.get("url", ""),
+                        "content": article.get("description", "")[:500],  # Limiter à 500 chars
+                        "source": "dev.to",
+                        "likes": article.get("positive_reactions_count", 0),
+                        "published_at": datetime.fromisoformat(article.get("published_at", "").replace('Z', '+00:00')) if article.get("published_at") else datetime.utcnow(),
+                    }
+                    posts.append(post)
+                    
+                except Exception as e:
+                    print(f"  ⚠️  Erreur parsing article: {e}")
+                    continue
+            
+            print(f"  ✅ {len(posts)} articles parsés")
+            return posts
+        
+        except Exception as e:
+            print(f"❌ Erreur fetching Dev.to API: {e}")
+            return []
+    
+    """
+    def _scrape_devto(self) -> List[dict]:
+        "scrape le top 5 posts de dev.to"
+        posts = []
+        url = "https://dev.to/top/week/"
+        
+        try:
+            feed = feedparser.parse(url)
+            print(f"📡 Récupération de {feed.feed.title}...")
+            
+            for entry in feed.entries[:5]:  # Top 5 posts
+                post = {
+                    "title": entry.title,
+                    "url": entry.link,
+                    "content": entry.get("summary", ""),
+                    "source": feed.feed.title,
+                    "likes": 0,
+                    "published_at": datetime(*entry.published_parsed[:6]) if entry.get("published_parsed") else datetime.utcnow(),
+                }
+                posts.append(post)
+            
+            print(f"✅ {len(posts)} posts de {feed.feed.title}")
+            return posts
+        
+        except Exception as e:
+            print(f"❌ Erreur fetching Dev.to: {e}")
+            return []
+    """
+    
     def _fetch_other_feeds(self) -> List[dict]:
         """Récupère les posts des autres sources RSS"""
         
@@ -124,9 +188,10 @@ class RSSService:
         return posts
     
     def fetch_posts(self) -> List[dict]:
-        """Récupère tous les posts (HN top 10 + autres sources)"""
+        """Récupère tous les posts (HN top 10 + Dev.to + autres sources)"""
         hn_posts = self._fetch_hackernews_posts()
+        devto_posts = self._scrape_devto()
         other_posts = self._fetch_other_feeds()
         
-        print(f"\n🎉 Total: {len(hn_posts)} posts HN + {len(other_posts)} posts autres sources")
-        return hn_posts + other_posts
+        print(f"\n🎉 Total: {len(hn_posts)} posts HN + {len(devto_posts)} posts Dev.to + {len(other_posts)} posts autres sources")
+        return hn_posts + devto_posts + other_posts

@@ -55,6 +55,16 @@
             color: var(--primary-color);
         }
 
+        h1 a {
+            color: inherit;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        h1 a:hover {
+            opacity: 0.8;
+        }
+
         nav a {
             color: var(--text-light);
             text-decoration: none;
@@ -117,9 +127,8 @@
 <body>
     <header>
         <div class="container">
-            <h1>Niche Watcher</h1>
+            <h1><a href="/">Niche Watcher</a></h1>
             <nav>
-                <a href="/">Accueil</a>
                 <a href="/posts">Posts</a>
                 <a href="/health">Health</a>
                 <a href="/logout">Logout</a>

@@ -4,6 +4,113 @@
 
 {% block extra_styles %}
 <style>
+    .featured-section {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .featured-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .featured-title::before {
+        content: "⭐";
+        font-size: 1.8rem;
+    }
+
+    .featured-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .featured-card {
+        background: linear-gradient(135deg, var(--primary-color), #6b7aff);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        transition: all 0.3s;
+    }
+
+    .featured-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
+    }
+
+    .featured-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .featured-badge {
+        display: inline-block;
+        background-color: rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .featured-card .post-title {
+        color: white;
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .featured-card .post-meta {
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .featured-card .post-content {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.95);
+        position: relative;
+        z-index: 1;
+    }
+
+    .featured-card .post-footer {
+        color: rgba(255, 255, 255, 0.9);
+        position: relative;
+        z-index: 1;
+    }
+
+    .featured-card .post-link {
+        color: white;
+        border-color: rgba(255, 255, 255, 0.5);
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .featured-card .post-link:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-color: white;
+    }
+
     .header-section {
         display: flex;
         justify-content: space-between;
@@ -211,6 +318,41 @@
         <button class="button" onclick="applyFilters()">Filtrer</button>
     </div>
 </div>
+
+{% if featured_posts %}
+<div class="featured-section">
+    <h2 class="featured-title">À la Une</h2>
+    <div class="featured-grid">
+        {% for source, post in featured_posts.items() %}
+        <div class="featured-card">
+            <span class="featured-badge">{{ post.source }}</span>
+            <div class="post-header">
+                <h3 class="post-title">{{ post.title or 'Sans titre' }}</h3>
+            </div>
+            
+            <div class="post-meta">
+                <div class="meta-item">
+                    📅 {{ post.published_at.strftime('%d/%m/%Y') if post.published_at else 'N/A' }}
+                </div>
+            </div>
+
+            <div class="post-content">
+                {{ post.content|striptags|truncate(150) }}
+            </div>
+
+            <div class="post-footer">
+
+                <div class="post-actions">
+                    {% if post.url %}
+                    <a href="{{ post.url }}" target="_blank" rel="noopener noreferrer" class="post-link">Lire l'article</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 {% if posts %}
 <div class="posts-grid">
