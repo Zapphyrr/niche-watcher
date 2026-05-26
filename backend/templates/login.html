@@ -26,17 +26,36 @@
 
     .auth-tab {
         flex: 1;
-        border: 1px solid var(--border-color);
-        background: #111827;
-        color: var(--text-light);
         padding: 0.75rem;
         border-radius: 0.5rem;
         cursor: pointer;
+        width: 100%;
     }
 
     .auth-tab.active {
-        border-color: var(--primary-color);
-        color: var(--primary-color);
+        color: var(--text-light);
+    }
+
+    .auth-tabs .btn-primary {
+        --bs-btn-bg: var(--primary-color);
+        --bs-btn-border-color: var(--primary-color);
+        --bs-btn-hover-bg: var(--primary-color);
+        --bs-btn-hover-border-color: var(--primary-color);
+        --bs-btn-active-bg: var(--primary-color);
+        --bs-btn-active-border-color: var(--primary-color);
+        --bs-btn-focus-shadow-rgb: 99, 102, 241;
+    }
+
+    .auth-tabs .btn-outline-primary {
+        --bs-btn-color: var(--primary-color);
+        --bs-btn-border-color: var(--primary-color);
+        --bs-btn-hover-bg: var(--primary-color);
+        --bs-btn-hover-border-color: var(--primary-color);
+        --bs-btn-hover-color: var(--text-light);
+        --bs-btn-active-bg: var(--primary-color);
+        --bs-btn-active-border-color: var(--primary-color);
+        --bs-btn-active-color: var(--text-light);
+        --bs-btn-focus-shadow-rgb: 99, 102, 241;
     }
 
     .auth-panel {
@@ -97,8 +116,8 @@
     <h2 class="auth-title">Connexion requise</h2>
 
     <div class="auth-tabs">
-        <button type="button" class="auth-tab active" data-mode="login">Se connecter</button>
-        <button type="button" class="auth-tab" data-mode="signup">S'inscrire</button>
+        <button type="button" class="auth-tab btn btn-primary active" data-mode="login">Se connecter</button>
+        <button type="button" class="auth-tab btn btn-outline-primary" data-mode="signup">S'inscrire</button>
     </div>
 
     <div id="auth-message" class="message"></div>
@@ -152,7 +171,10 @@ function setMode(mode) {
     currentMode = mode;
 
     tabs.forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.mode === mode);
+        const isActive = tab.dataset.mode === mode;
+        tab.classList.toggle('active', isActive);
+        tab.classList.toggle('btn-primary', isActive);
+        tab.classList.toggle('btn-outline-primary', !isActive);
     });
 
     panels.forEach(panel => {

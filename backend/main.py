@@ -157,9 +157,48 @@ def get_posts_page(request: Request, page: int = 1, sort: str = "latest", week: 
         db.close()
 
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
+@app.get("/newsletters")
+def get_newsletters_page(request: Request):
+    """Page des newsletters"""
+    db = next(get_db())
+    try:
+        user = _get_authenticated_user(request, db)
+        if user is None:
+            return RedirectResponse(url="/login", status_code=303)
+
+        return templates.TemplateResponse("newsletters.html", {"request": request, "user": user})
+    finally:
+        db.close()
+
+
+@app.post("/newsletters/subscribe")
+def subscribe_newsletters(request: Request):
+    db = next(get_db())
+    try:
+        user = _get_authenticated_user(request, db)
+        if user is None:
+            return RedirectResponse(url="/login", status_code=303)
+
+        user.subscribed = True
+        db.commit()
+        return RedirectResponse(url="/newsletters", status_code=303)
+    finally:
+        db.close()
+
+
+@app.post("/newsletters/unsubscribe")
+def unsubscribe_newsletters(request: Request):
+    db = next(get_db())
+    try:
+        user = _get_authenticated_user(request, db)
+        if user is None:
+            return RedirectResponse(url="/login", status_code=303)
+
+        user.subscribed = False
+        db.commit()
+        return RedirectResponse(url="/newsletters", status_code=303)
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

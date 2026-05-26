@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Newsletters - Niche Watcher{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .newsletter-card {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+    }
+
+    .newsletter-card h3 {
+        margin-bottom: 0.5rem;
+    }
+
+    .newsletter-actions {
+        margin-top: 1rem;
+    }
+
+    .newsletter-actions .btn {
+        min-width: 220px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h2>Newsletters</h2>
+    <p>Notre newsletter hebdomadaire permet de recevoir les dernières actualités et tendances du secteur directement dans votre boîte mail en plus du site.</p>
+
+    <div class="newsletter-card">
+        {% if user.subscribed %}
+            <h3>Vous êtes déjà inscrit</h3>
+            <p>Vous recevez la newsletter. Si vous souhaitez arrêter, vous pouvez vous désinscrire à tout moment.</p>
+            <div class="newsletter-actions">
+                <form method="post" action="/newsletters/unsubscribe">
+                    <button type="submit" class="btn btn-outline-primary">Se désinscrire</button>
+                </form>
+            </div>
+        {% else %}
+            <h3>Envie de recevoir nos actus ?</h3>
+            <p>Abonnez-vous pour recevoir la synthèse hebdomadaire directement par email.</p>
+            <div class="newsletter-actions">
+                <form method="post" action="/newsletters/subscribe">
+                    <button type="submit" class="btn btn-primary">Oui, je veux m'inscrire</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
