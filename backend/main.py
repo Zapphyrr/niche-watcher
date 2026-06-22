@@ -110,14 +110,16 @@ def get_posts_page(request: Request, page: int = 1, sort: str = "latest", week: 
 
         limit = 10
         skip = (page - 1) * limit
-        
+        latest_post = db.query(Post).order_by(Post.created_at.desc()).first()
+        latest_week = latest_post.week if latest_post else None
         # Récupérer les top 1 posts par source (pour "à la une")
         featured_posts = {}
         featured_ids = []
         sources = db.query(Post.source).distinct().all()
         for source_tuple in sources:
             source = source_tuple[0]
-            top_post = db.query(Post).filter(Post.source == source).order_by(Post.likes.desc(), Post.created_at.desc()).first()
+            top_post = db.query(Post).filter(Post.source == source).filter(Post.week == latest_week).order_by(Post.likes.desc(), Post.created_at.desc()).first()
+            
             if top_post:
                 featured_posts[source] = top_post
                 featured_ids.append(top_post.id)
