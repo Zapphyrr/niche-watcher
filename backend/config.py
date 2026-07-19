@@ -9,7 +9,10 @@ class Settings(BaseSettings):
     # Email Bot (Gmail SMTP)
     email_bot_address: str = "niche.watcher.bot@gmail.com"
     email_bot_password: str = "dev_bot_password"
-    
+    resend_api_key: str
+    sender_email: str
+    reddit_client_id: str
+    reddit_client_secret: str
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8000

@@ -1,11 +1,13 @@
 import feedparser
 import requests
 from typing import List
+from models import Besthackernews
+from database import SessionLocal, engine, Base
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import re
 
-
+db = SessionLocal()
 class RSSService:
     def __init__(self):
         self.other_feeds = [
@@ -92,7 +94,20 @@ class RSSService:
         print(f"\n🔝 Top 10 posts HN de la semaine:")
         for i, post in enumerate(top_posts, 1):
             print(f"  {i}. {post['title'][:60]}... ({post['likes']} points), sortis le {post['published_at'].strftime('%Y-%m-%d')}")
-        
+            #Save du top1 HN dans la BD
+            if i == 1:
+                print(f"  💾 Sauvegarde du top post HN {post['title']} dans la base de données...")
+                best_post = Besthackernews(
+                    title=post['title'],
+                    url=post['url'],
+                    content=post['content'],
+                    source=post['source'],
+                    likes=post['likes'],
+                    published_at=post['published_at']
+                )
+                db.add(best_post)
+                db.commit()
+
         return top_posts
     
     def _scrape_devto(self) -> List[dict]:

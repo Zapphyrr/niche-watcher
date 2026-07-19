@@ -1,4 +1,4 @@
-CREATE USER niche_watcher WITH PASSWORD '';
+CREATE USER niche_watcher WITH PASSWORD 'test';
 CREATE DATABASE niche_watcher OWNER niche_watcher;
 ALTER ROLE niche_watcher SET client_encoding TO 'utf8';
 ALTER ROLE niche_watcher SET default_transaction_isolation TO 'read committed';

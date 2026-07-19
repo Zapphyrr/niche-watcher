@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
 from database import Base, engine, get_db
 from routes import posts_router, auth_router
-from models import Post, User
+from models import Post, User, Besthackernews
 from services import decode_access_token
 from pathlib import Path
 import asyncio
@@ -202,6 +202,19 @@ def unsubscribe_newsletters(request: Request):
     finally:
         db.close()
 
+@app.get("/best-post")
+def get_best_post(request: Request):
+    """Récupère le meilleur post de la semaine"""
+    db = next(get_db())
+    try:
+        user = _get_authenticated_user(request, db)
+        if user is None:
+            return RedirectResponse(url="/login", status_code=303)
+
+        best_post = db.query(Besthackernews).order_by(Besthackernews.published_at.desc()).first()
+        return best_post
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     import uvicorn

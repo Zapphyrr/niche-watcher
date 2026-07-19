@@ -3,13 +3,16 @@ backend/__pycache__/
 backend/*.pyc
 backend/.env
 backend/.venv
+backend/models/__pycache__/*.*.pyc
+backend/models/*.pyc
+backend/models/
 backend/venv
 backend/env
 backend/.pytest_cache
 backend/dist
 backend/build
 *.egg-info
-
+backend\models\*
 # Mobile
 mobile/build/
 mobile/.dart_tool/
