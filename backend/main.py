@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
 from database import Base, engine, get_db
 from routes import posts_router, auth_router
-from models import Post, User, Besthackernews
+from models import User, UserCredential, Post, Besthackernews
 from services import decode_access_token
 from pathlib import Path
 import asyncio
@@ -19,11 +19,8 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     # Startup - créer les tables avec timeout
     try:
-        # Timeout de 10 secondes pour l'initialisation
-        await asyncio.wait_for(
-            asyncio.to_thread(lambda: Base.metadata.create_all(bind=engine)),
-            timeout=10.0
-        )
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables checked/created")
         logger.info("✅ Database tables initialized")
     except asyncio.TimeoutError:
         logger.warning("⚠️ Database initialization timed out, continuing anyway")
