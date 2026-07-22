@@ -38,3 +38,15 @@ with engine.connect() as conn:
             print("  (no credentials)")
     except Exception as e:
         print(f"  Error: {e}")
+        
+    print('\n\nBest Posts table:')
+    try :
+        result = conn.execute(text("SELECT id, title, url, source, published_at FROM best_hackernew;"))
+        rows = result.fetchall()
+        if rows:
+            for row in rows:
+                print(f"  id={row[0]}, title={row[1]}, url={row[2]}, source={row[3]}, published_at={row[4]}")
+        else:
+            print("  (no best posts)")
+    except Exception as e:
+        print(f"  Error: {e}")

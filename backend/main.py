@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -198,21 +198,20 @@ def unsubscribe_newsletters(request: Request):
         return RedirectResponse(url="/newsletters", status_code=303)
     finally:
         db.close()
-
+        
+        
 @app.get("/best-post")
-def get_best_post(request: Request):
+def get_best_post():
     """Récupère le meilleur post de la semaine"""
     db = next(get_db())
     try:
-        user = _get_authenticated_user(request, db)
-        if user is None:
-            return RedirectResponse(url="/login", status_code=303)
-
         best_post = db.query(Besthackernews).order_by(Besthackernews.published_at.desc()).first()
+        if best_post is None:
+            raise HTTPException(status_code=404, detail="Aucun post trouvé")
         return best_post
     finally:
         db.close()
-
+        
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
