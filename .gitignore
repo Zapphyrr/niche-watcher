@@ -33,3 +33,6 @@ mobile/.flutter-plugins-dependencies
 
 # OS
 Thumbs.db
+
+#debug
+backend/debug.py
