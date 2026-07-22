@@ -6,6 +6,8 @@ from database import SessionLocal, engine, Base
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import re
+#scrap du content du best post HN
+import trafilatura
 
 db = SessionLocal()
 class RSSService:
@@ -105,6 +107,12 @@ class RSSService:
                     likes=post['likes'],
                     published_at=post['published_at']
                 )
+                if best_post.content == "":
+                    #scrap du content du best post HN
+                    url = best_post.url
+                    downloaded = trafilatura.fetch_url(url)
+                    if downloaded:
+                        best_post.content = trafilatura.extract(downloaded, include_comments=False)[:500]
                 db.add(best_post)
                 db.commit()
 
