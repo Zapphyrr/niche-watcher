@@ -39,7 +39,7 @@ templates = Jinja2Templates(directory=str(templates_dir))
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url] if settings.environment == "production" else ["*"],
+    allow_origins=["*"],  # Permettre toutes les origines pour le développement
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
